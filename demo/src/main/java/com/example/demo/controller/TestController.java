@@ -1,9 +1,7 @@
 package com.example.demo.controller;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.example.demo.dto.TestRequestBodyDTO;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("test")	// 리소스
@@ -16,8 +14,17 @@ public class TestController {
 	
 	// 매개변수를 넘겨받는 방법
 	@GetMapping({"/{id}", "/"})
-	public String testControllerWithPathVariables(@PathVariable(required=false)Integer id) {
+	public String testControllerWithPathVariables(@PathVariable(required=false)int id) {
 		return "Hello World! ID " + id;
 	}
 
+	@GetMapping("/testRequestParam")
+	public String testControllerRequestParam(@RequestParam(required=false) int id) {
+		return "Hello World! ID " + id;
+	}
+
+	@GetMapping("/testRequestBody")
+	public String testControllerRequestBody(@RequestBody TestRequestBodyDTO testRequestBodyDTO){
+		return "Hello World! ID " + testRequestBodyDTO.getId() + " Message : " +testRequestBodyDTO.getMessage();
+	}
 }
