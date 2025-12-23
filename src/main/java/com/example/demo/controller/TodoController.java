@@ -4,7 +4,6 @@ import com.example.demo.dto.ResponseDTO;
 import com.example.demo.dto.TodoDTO;
 import com.example.demo.model.TodoEntity;
 import com.example.demo.service.TodoService;
-import org.apache.coyote.Response;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,15 +14,15 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("todo")
 public class TodoController {
-    private final TodoService todoService;
+    private final TodoService service;
 
-    public TodoController(TodoService todoService) {
-        this.todoService = todoService;
+    public TodoController(TodoService service) {
+        this.service = service;
     }
 
     @GetMapping("/test")
     public ResponseEntity<?> testTodo() {
-        String str = todoService.testService();
+        String str = service.testService();
         List<String> list = new ArrayList<>();
         list.add(str);
         ResponseDTO<String> response = ResponseDTO.<String>builder().data(list).build();
@@ -47,7 +46,7 @@ public class TodoController {
             entity.setUserId(temporaryUserId);
 
             // (4) 서비스를 이용해 Todo 엔티티를 생성한다.
-            List<TodoEntity> entities = todoService.create(entity);
+            List<TodoEntity> entities = service.create(entity);
 
             // (5) 자바 스트림을 이용해 리턴된 엔티티 리스트를 TodoDTO 리스트로 변환한다.
             List<TodoDTO> dtos = entities.stream().map(TodoDTO::new).collect(Collectors.toList());
@@ -70,7 +69,7 @@ public class TodoController {
         String userId = "temporary-user"; // temporary user id.
 
         // (1) 서비스 메서드의 read() 메서드를 사용해 Todo 리스트를 찾는다.
-        List<TodoEntity> entities = todoService.read(userId);
+        List<TodoEntity> entities = service.read(userId);
 
         // (2) 자바 스트림을 이용해 리턴된 엔티티 리스트를 TodoDTO 리스트로 변환한다.
         List<TodoDTO> dtos = entities.stream().map(TodoDTO::new).collect(Collectors.toList());
@@ -79,5 +78,60 @@ public class TodoController {
         ResponseDTO<TodoDTO> response = ResponseDTO.<TodoDTO>builder().data(dtos).build();
 
         return ResponseEntity.ok().body(response);
+    }
+
+    // update todo
+    @PutMapping
+    public ResponseEntity<?> updateTodoList(@RequestBody TodoDTO dto) {
+        String temporaryId = "temporary-user";
+
+        // (1) dto를 entity로 변환한다.
+        TodoEntity entity = TodoDTO.toEntity(dto);
+
+        // (2) id를 temporaryUserId로 초기화한다. 여기는 4장 인증과 인가에서 수정할 예정이다.
+        entity.setUserId(temporaryId);
+
+        // (3) 서비스를 이용해 entity를 업데이트한다.
+        List<TodoEntity> entities = service.update(entity);
+
+        // (4) 자바 스트림을 이용해 리턴된 엔티티 리스트를 todoDTO 리스트로 변환한다.
+        List<TodoDTO> dtos = entities.stream().map(TodoDTO::new).collect(Collectors.toList());
+
+        // (5) 변환된 TodoDTO 리스트를 이용해 ResponseDTO를 초기화한다.
+        ResponseDTO<TodoDTO> response = ResponseDTO.<TodoDTO>builder().data(dtos).build();
+
+        // (6) ResponseDTO를 리턴한다.
+        return ResponseEntity.ok().body(response);
+    }
+
+    // delete todo
+    @DeleteMapping
+    public ResponseEntity<?> deleteTodoList(@RequestBody TodoDTO dto) {
+        try {
+            String temporaryId = "temporary-user";
+
+            // (1) TodoEntity로 변환한다.
+            TodoEntity entity = TodoDTO.toEntity(dto);
+
+            // (2) id를 temporaryUserId로 초기화한다. 여기는 4장 인증과 인가에서 수정할 예정이다.
+            entity.setUserId(temporaryId);
+
+            // (3) 서비스를 이용해 entity를 삭제한다.
+            List<TodoEntity> entities = service.delete(entity);
+
+            // (4) 자바 스트림을 이용해 리턴된 엔티티 리스트를 TodoDTO 리스트로 변환한다.
+            List<TodoDTO> dtos = entities.stream().map(TodoDTO::new).collect(Collectors.toList());
+
+            // (5) 변환된 TodoDTO 리스트를 이용해 ResponseDTO를 초기화한다.
+            ResponseDTO<TodoDTO> response = ResponseDTO.<TodoDTO>builder().data(dtos).build();
+
+            // (6) ResponseDTO를 리턴한다.
+            return ResponseEntity.ok().body(response);
+        } catch(Exception e) {
+            // (7) 혹시 예외가 있는 경우 dto 대신 error 메세지를 넣어 리턴한다.
+            String error = e.getMessage();
+            ResponseDTO<TodoDTO> response = ResponseDTO.<TodoDTO>builder().error(error).build();
+            return ResponseEntity.badRequest().body(response);
+        }
     }
 }
